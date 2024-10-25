@@ -40,12 +40,44 @@ function parseData(data: string) {
 
 
 export function activate(context: vscode.ExtensionContext) {
+
+    const client = new net.Socket();
     // 創建狀態欄項目
-    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);
+    const btn_prev = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 999);
+    const btn_toggle = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 998);
+    const btn_next = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 997);
     statusBarItem.show();
 
+    const prevCommand = vscode.commands.registerCommand('extension.prev', () => {
+        // vscode.window.showInformationMessage('prev');
+        client.write('previous\n');
+    });
+
+    const toggleCommand = vscode.commands.registerCommand('extension.toggle', () => {
+        // vscode.window.showInformationMessage('toggle');
+        client.write('toggle\n');
+    });
+
+    const nextCommand = vscode.commands.registerCommand('extension.next', () => {
+        // vscode.window.showInformationMessage('next');
+        client.write('next\n');
+    });
+
+    btn_prev.text = "$(chevron-left)";
+    btn_prev.command = 'extension.prev';
+    
+    btn_toggle.text = "$(triangle-right)";
+    btn_toggle.command = 'extension.toggle';
+
+    btn_next.text = "$(chevron-right)";
+    btn_next.command = 'extension.next';
+
+    btn_prev.show();
+    btn_toggle.show();
+    btn_next.show();
+
     // 創建 TCP 客戶端
-    const client = new net.Socket();
 
     // 連接到 TCP 服務器，替換為實際的主機名和端口號
     client.connect(23333, 'localhost', () => {
@@ -76,7 +108,13 @@ export function activate(context: vscode.ExtensionContext) {
 		const parsed = parseData(data.toString());
 
         // 更新狀態欄顯示
-        statusBarItem.text = `${parsed['lyric-s']} - ${parsed['song_name']}`;
+        if (parsed['state'] === 'playing') {
+            statusBarItem.text = `${parsed['lyric-s']} - ${parsed['song_name']}`;
+            btn_toggle.text = "$(primitive-square)";
+        }else{
+            statusBarItem.text = '';   
+            btn_toggle.text = "$(triangle-right)";
+        }
     });
 
     // 當 TCP 連接關閉時觸發
